@@ -4,8 +4,10 @@ from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceInstructEmbeddings
 from langchain.llms import HuggingFacePipeline
 from constants import CHROMA_SETTINGS, PERSIST_DIRECTORY
-from transformers import LlamaTokenizer, LlamaForCausalLM, pipeline
+from transformers import pipeline, AutoTokenizer
 import click
+from auto_gptq import AutoGPTQForCausalLM
+import torch
 
 from constants import CHROMA_SETTINGS
 
@@ -15,22 +17,17 @@ def load_model():
     If you are running this for the first time, it will download a model for you. 
     subsequent runs will use the model from the disk. 
     '''
-    model_id = "TheBloke/vicuna-7B-1.1-HF"
-    tokenizer = LlamaTokenizer.from_pretrained(model_id)
+    quantized_model_dir = "./models/TheBloke/falcon-7b-instruct-GPTQ"
+    tokenizer = AutoTokenizer.from_pretrained(quantized_model_dir, use_fast=False)
 
-    model = LlamaForCausalLM.from_pretrained(model_id,
-                                            #   load_in_8bit=True, # set these options if your GPU supports them!
-                                            #   device_map=1#'auto',
-                                            #   torch_dtype=torch.float16,
-                                            #   low_cpu_mem_usage=True
-                                              )
+    model = AutoGPTQForCausalLM.from_quantized(quantized_model_dir, device="cuda:0", use_triton=False, use_safetensors=True, torch_dtype=torch.float32, trust_remote_code=True)
 
     pipe = pipeline(
         "text-generation",
         model=model, 
         tokenizer=tokenizer, 
         max_length=2048,
-        temperature=0,
+        temperature=0.7,
         top_p=0.95,
         repetition_penalty=1.15
     )

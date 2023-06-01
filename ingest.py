@@ -18,6 +18,8 @@ def load_single_document(file_path: str) -> Document:
         loader = PDFMinerLoader(file_path)
     elif file_path.endswith(".csv"):
         loader = CSVLoader(file_path)
+    elif file_path.endswith(".py"):
+        loader = TextLoader(file_path, encoding="utf8")
     return loader.load()[0]
 
 
@@ -39,7 +41,7 @@ def main(device_type, ):
     # Load documents and split in chunks
     print(f"Loading documents from {SOURCE_DIRECTORY}")
     documents = load_documents(SOURCE_DIRECTORY)
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=150)
     texts = text_splitter.split_documents(documents)
     print(f"Loaded {len(documents)} documents from {SOURCE_DIRECTORY}")
     print(f"Split into {len(texts)} chunks of text")
